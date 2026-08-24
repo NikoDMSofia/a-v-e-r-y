@@ -222,3 +222,31 @@ footer{padding:48px 0;border-top:1px solid var(--line);margin-top:30px}
     min-height:38px;
   }
 }
+
+
+/* Move the four bottom navigation buttons 100px upward */
+.bottom-nav-actions{
+  transform:translateY(-100px);
+}
+
+
+/* The Letter: bottom navigation centered with exactly 100px space above and below */
+.letter-bottom-actions{
+  transform:none !important;
+  margin-top:100px !important;
+  margin-bottom:100px !important;
+  justify-content:center !important;
+  align-items:center;
+  width:100%;
+}
+
+
+/* The Love Letter: navigation 50px after the letter and 100px before the footer/last section */
+.love-letter-bottom-actions{
+  transform:none !important;
+  margin-top:50px !important;
+  margin-bottom:100px !important;
+  justify-content:center !important;
+  align-items:center;
+  width:100%;
+}
