@@ -157,3 +157,45 @@ footer{padding:48px 0;border-top:1px solid var(--line);margin-top:30px}
   .foot{display:block}.foot-copy{margin-top:10px}
 }
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
+
+
+/* Bottom navigation after the final Avery message */
+.bottom-nav-actions{
+  justify-content:center;
+  margin-top:99px;
+  gap:8px;
+  flex-wrap:nowrap;
+}
+.bottom-nav-actions .btn{
+  min-height:42px;
+  padding:0 15px;
+  font-size:12px;
+  white-space:nowrap;
+}
+.bottom-nav-actions .love-btn{
+  color:var(--wine);
+}
+@media(max-width:520px){
+  .bottom-nav-actions{
+    gap:5px;
+    margin-top:99px;
+  }
+  .bottom-nav-actions .btn{
+    min-height:39px;
+    padding:0 9px;
+    font-size:10.5px;
+  }
+}
+
+
+.memories-bottom-actions{
+  margin-top:99px;
+  margin-bottom:70px;
+}
+
+
+.letter-bottom-actions,
+.love-letter-bottom-actions{
+  margin-top:99px;
+  margin-bottom:70px;
+}
