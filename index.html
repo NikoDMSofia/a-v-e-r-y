@@ -1,4 +1,9 @@
 <!doctype html><html lang="bg"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>For Avery · Avery</title><meta name="description" content="Личен сайт за любов, загуба, спомени и грижа."><link rel="stylesheet" href="assets/style.css"></head><body>
+
+<audio id="siteMusic" loop preload="auto">
+  <source src="assets/love-theme.mp3" type="audio/mpeg">
+</audio>
+
 <div class="progress"></div>
 <div class="sky"><span class="star s1">✦</span><span class="star s2">✧</span><span class="star s3">✦</span><span class="heart h1">♡</span><span class="heart h2">♡</span><span class="heart h3">♡</span></div>
 <header><div class="wrap navshell"><a class="brand" href="index.html">Avery <small>from Niki</small></a><nav class="navlinks"><a class="active" href="index.html">Home</a><a class="" href="letter.html">The Letter</a><a class="" href="memories.html">Memories</a><a class="" href="love-letter.html">Love Letter</a></nav><button class="menu" aria-label="Меню">☰</button></div></header>
@@ -27,4 +32,61 @@
 <section class="quote"><div class="wrap"><p class="reveal">“You matter to me, Avery. <em>Much more than I managed to show you.</em>”</p></div></section>
 </main>
 <div class="lightbox"><button>×</button><img alt="Уголемен спомен"></div>
-<footer><div class="wrap foot"><div class="foot-sign">With love ♡</div><div class="foot-copy">Created by <span style="color:#8B1E2D;font-weight:700;">NdM Company ♥</span> · All rights reserved.</div></div></footer><script src="assets/app.js"></script></body></html>
+<footer><div class="wrap foot"><div class="foot-sign">With love ♡</div><div class="foot-copy">Created by <span style="color:#8B1E2D;font-weight:700;">NdM Company ♥</span> · All rights reserved.</div></div></footer><script src="assets/app.js"></script>
+<script>
+(() => {
+  const audio = document.getElementById('siteMusic');
+  if (!audio) return;
+
+  const VOLUME = 0.05;
+  audio.volume = VOLUME;
+
+  // Resume close to the previous position after navigation.
+  const savedTime = parseFloat(sessionStorage.getItem('averyMusicTime') || '0');
+  const savedPlaying = sessionStorage.getItem('averyMusicPlaying');
+
+  const restore = () => {
+    if (Number.isFinite(savedTime) && savedTime > 0 && audio.duration) {
+      audio.currentTime = Math.min(savedTime, Math.max(0, audio.duration - 0.25));
+    }
+  };
+
+  if (audio.readyState >= 1) restore();
+  else audio.addEventListener('loadedmetadata', restore, { once: true });
+
+  const tryPlay = () => {
+    audio.volume = VOLUME;
+    audio.play().then(() => {
+      sessionStorage.setItem('averyMusicPlaying', '1');
+    }).catch(() => {});
+  };
+
+  // Try immediately. If the browser blocks autoplay with sound,
+  // start on the user's first interaction.
+  if (savedPlaying !== '0') tryPlay();
+
+  const firstInteraction = () => {
+    if (audio.paused) tryPlay();
+    window.removeEventListener('pointerdown', firstInteraction);
+    window.removeEventListener('keydown', firstInteraction);
+    window.removeEventListener('touchstart', firstInteraction);
+  };
+
+  window.addEventListener('pointerdown', firstInteraction, { passive: true });
+  window.addEventListener('keydown', firstInteraction);
+  window.addEventListener('touchstart', firstInteraction, { passive: true });
+
+  const saveState = () => {
+    try {
+      sessionStorage.setItem('averyMusicTime', String(audio.currentTime || 0));
+      sessionStorage.setItem('averyMusicPlaying', audio.paused ? '0' : '1');
+    } catch(e) {}
+  };
+
+  setInterval(saveState, 500);
+  window.addEventListener('pagehide', saveState);
+  window.addEventListener('beforeunload', saveState);
+})();
+</script>
+
+</body></html>
