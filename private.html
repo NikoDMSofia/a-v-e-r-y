@@ -882,15 +882,19 @@
       const TRANSACTIONS_KEY = "nikiAveryTransactions";
       const STARTING_BALANCE = 390;
 
-      const RESET_VERSION = "seeded-history-v1";
+      const RESET_VERSION = "seeded-history-v2-final";
       const RESET_VERSION_KEY = "nikiAveryLedgerResetVersion";
       const INITIAL_TRANSACTIONS = [{"id":2026082101,"type":"deposit","name":"Ники","amount":100.0,"date":"2026-08-21"},{"id":2026082201,"type":"deposit","name":"Ники","amount":60.0,"date":"2026-08-22"},{"id":2026082501,"type":"deposit","name":"Айвъри","amount":20.0,"date":"2026-08-25"},{"id":2026082601,"type":"deposit","name":"Ники","amount":210.0,"date":"2026-08-26"}];
 
       if(localStorage.getItem(RESET_VERSION_KEY) !== RESET_VERSION){
+        localStorage.removeItem("nikiAverySharedBalance");
+        localStorage.removeItem("nikiAveryTransactions");
         localStorage.setItem("nikiAverySharedBalance", "390.00");
         localStorage.setItem("nikiAveryTransactions", JSON.stringify(INITIAL_TRANSACTIONS));
         localStorage.setItem(RESET_VERSION_KEY, RESET_VERSION);
       }
+
+
 
 
 
