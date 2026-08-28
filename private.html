@@ -664,6 +664,67 @@
         flex-direction:column;
       }
     }
+  
+    /* Banking blue theme — calm, trustworthy, professional */
+    :root{
+      --bank-navy:#071A33;
+      --bank-blue:#0B2F5B;
+      --bank-blue-soft:#123F73;
+      --bank-panel:rgba(10,38,72,.86);
+      --bank-panel-soft:rgba(17,54,96,.72);
+      --bank-line:rgba(174,207,240,.18);
+      --bank-text:#F4F8FC;
+      --bank-muted:#AFC4D9;
+    }
+
+    html, body{
+      background:
+        radial-gradient(circle at 18% 0%, rgba(40,101,165,.30), transparent 34%),
+        radial-gradient(circle at 90% 18%, rgba(18,72,126,.22), transparent 30%),
+        linear-gradient(145deg, var(--bank-navy) 0%, var(--bank-blue) 55%, #082542 100%) !important;
+      background-attachment:fixed !important;
+      color:var(--bank-text);
+    }
+
+    .private-shell,
+    .account-shell,
+    .private-card,
+    .account-card,
+    .balance-card,
+    .info-card,
+    .transaction-card,
+    .transaction-item,
+    .modal-card{
+      border-color:var(--bank-line) !important;
+    }
+
+    .account-card,
+    .private-card,
+    .modal-card{
+      background:linear-gradient(145deg, rgba(8,31,60,.94), rgba(13,49,89,.90)) !important;
+      box-shadow:0 22px 70px rgba(0,10,28,.34) !important;
+    }
+
+    .balance-card,
+    .info-card,
+    .transaction-card,
+    .transaction-item{
+      background:var(--bank-panel-soft) !important;
+    }
+
+    .muted,
+    .eyebrow,
+    .transaction-date-inline{
+      color:var(--bank-muted) !important;
+    }
+
+    input,
+    select{
+      background:rgba(5,25,50,.72) !important;
+      border-color:rgba(174,207,240,.22) !important;
+      color:var(--bank-text) !important;
+    }
+
   </style>
 </head>
 <body>
