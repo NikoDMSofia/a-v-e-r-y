@@ -1981,6 +1981,76 @@
       }, true);
 
       definitiveLockPrivatePage(false); // definitive initial lock
+
+
+      // Exact one-time reset requested for the Private ledger.
+      const PRIVATE_LEDGER_RESET_VERSION = "seed-2026-08-28-v390";
+      const PRIVATE_LEDGER_SEED = [{"name": "Ники", "type": "deposit", "amount": 100.0, "date": "2026-08-21"}, {"name": "Ники", "type": "deposit", "amount": 60.0, "date": "2026-08-22"}, {"name": "Айвъри", "type": "deposit", "amount": 20.0, "date": "2026-08-25"}, {"name": "Ники", "type": "deposit", "amount": 210.0, "date": "2026-08-26"}];
+
+      (function resetPrivateLedgerOnce(){
+        const resetKey = "nikiAveryLedgerResetVersion";
+        if(localStorage.getItem(resetKey) !== PRIVATE_LEDGER_RESET_VERSION){
+          localStorage.setItem("nikiAverySharedBalance", "390.00");
+          localStorage.setItem("nikiAveryTransactions", JSON.stringify(PRIVATE_LEDGER_SEED));
+          localStorage.setItem(resetKey, PRIVATE_LEDGER_RESET_VERSION);
+        }
+      })();
+
+
+      function formatLedgerDate(dateValue){
+        if(!dateValue) return "";
+        const parts = String(dateValue).split("-");
+        if(parts.length === 3){
+          return `${parts[2]}.${parts[1]}.${parts[0]}`;
+        }
+        return String(dateValue);
+      }
+
+
+      (function ensureTransactionDateDefaults(){
+        const dateInput =
+          document.getElementById("transactionDate") ||
+          document.querySelector('input[type="date"]');
+        if(dateInput && !dateInput.value){
+          const now = new Date();
+          const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+            .toISOString().slice(0,10);
+          dateInput.value = local;
+        }
+      })();
+
+
+      // Re-lock immediately when the user leaves this browser tab.
+      document.addEventListener("visibilitychange", function(){
+        if(document.hidden){
+          if(typeof definitiveLockPrivatePage === "function"){
+            definitiveLockPrivatePage(false);
+          }else if(typeof hardLockPrivatePage === "function"){
+            hardLockPrivatePage(false);
+          }
+        }
+      }, true);
+
+      // Extra protection for desktop/mobile browsers that blur without
+      // consistently firing visibilitychange.
+      window.addEventListener("blur", function(){
+        if(typeof definitiveLockPrivatePage === "function"){
+          definitiveLockPrivatePage(false);
+        }else if(typeof hardLockPrivatePage === "function"){
+          hardLockPrivatePage(false);
+        }
+      }, true);
+
+      // Returning to the tab/page never restores access automatically.
+      window.addEventListener("focus", function(){
+        if(sessionStorage.getItem("privateUnlocked") !== "true"){
+          if(typeof definitiveLockPrivatePage === "function"){
+            definitiveLockPrivatePage(false);
+          }else if(typeof hardLockPrivatePage === "function"){
+            hardLockPrivatePage(false);
+          }
+        }
+      }, true);
 </script>
 
   <div id="emailToast" class="email-toast" role="status" aria-live="polite"></div>
