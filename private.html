@@ -649,6 +649,17 @@
       opacity:.72;
     }
 
+
+    .pin-expired-message{
+      margin:0 0 12px;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,190,110,.28);
+      background:rgba(255,190,110,.08);
+      font-size:13px;
+      line-height:1.4;
+    }
+
     @media (max-width: 820px){
       .hero-grid,
       .cards-grid{
@@ -878,6 +889,111 @@
   <script>
     (function(){
       const PIN = "248624";
+
+      const PRIVATE_SESSION_KEY = "privateUnlocked";
+      const PRIVATE_SESSION_STARTED_KEY = "privateSessionStartedAt";
+      const PRIVATE_SESSION_LIMIT_MS = 2 * 60 * 1000;
+      let privateSessionTimer = null;
+
+      const sessionExpiredMessage = document.getElementById("sessionExpiredMessage");
+
+      function showSessionExpiredMessage(){
+        if(sessionExpiredMessage){
+          sessionExpiredMessage.hidden = false;
+        }
+      }
+
+      function hideSessionExpiredMessage(){
+        if(sessionExpiredMessage){
+          sessionExpiredMessage.hidden = true;
+        }
+      }
+
+      function clearPrivateSession(){
+        sessionStorage.removeItem(PRIVATE_SESSION_KEY);
+        sessionStorage.removeItem(PRIVATE_SESSION_STARTED_KEY);
+        if(privateSessionTimer){
+          clearTimeout(privateSessionTimer);
+          privateSessionTimer = null;
+        }
+      }
+
+      function lockPrivatePage(showExpired){
+        clearPrivateSession();
+
+        // Try common element ids/classes used by the Private PIN gate.
+        const gate = document.getElementById("pinGate") ||
+                     document.getElementById("lockScreen") ||
+                     document.querySelector(".pin-gate") ||
+                     document.querySelector(".lock-screen");
+        const content = document.getElementById("privateContent") ||
+                        document.getElementById("accountContent") ||
+                        document.querySelector(".private-content") ||
+                        document.querySelector(".account-content");
+
+        if(gate) gate.style.display = "";
+        if(content) content.style.display = "none";
+
+        if(showExpired){
+          showSessionExpiredMessage();
+        }else{
+          hideSessionExpiredMessage();
+        }
+
+        const pinInput = document.querySelector('input[type="password"]');
+        if(pinInput){
+          pinInput.value = "";
+          setTimeout(() => pinInput.focus(), 50);
+        }
+      }
+
+      function startPrivateSessionTimer(){
+        if(privateSessionTimer) clearTimeout(privateSessionTimer);
+        sessionStorage.setItem(PRIVATE_SESSION_STARTED_KEY, String(Date.now()));
+        privateSessionTimer = setTimeout(() => {
+          lockPrivatePage(true);
+          alert("Session expired. Please enter the PIN again.");
+        }, PRIVATE_SESSION_LIMIT_MS);
+      }
+
+      function resumeOrLockPrivateSession(){
+        const unlocked = sessionStorage.getItem(PRIVATE_SESSION_KEY) === "true";
+        const started = Number(sessionStorage.getItem(PRIVATE_SESSION_STARTED_KEY) || 0);
+
+        if(!unlocked || !started){
+          lockPrivatePage(false);
+          return;
+        }
+
+        const elapsed = Date.now() - started;
+        if(elapsed >= PRIVATE_SESSION_LIMIT_MS){
+          lockPrivatePage(true);
+          return;
+        }
+
+        privateSessionTimer = setTimeout(() => {
+          lockPrivatePage(true);
+          alert("Session expired. Please enter the PIN again.");
+        }, PRIVATE_SESSION_LIMIT_MS - elapsed);
+      }
+
+      // Any leave/minimize/tab switch locks the page immediately.
+      document.addEventListener("visibilitychange", () => {
+        if(document.hidden){
+          clearPrivateSession();
+        }else{
+          lockPrivatePage(false);
+        }
+      });
+
+      window.addEventListener("pagehide", () => {
+        clearPrivateSession();
+      });
+
+      window.addEventListener("beforeunload", () => {
+        clearPrivateSession();
+      });
+
       const BALANCE_KEY = "nikiAverySharedBalance";
       const TRANSACTIONS_KEY = "nikiAveryTransactions";
       const STARTING_BALANCE = 390;
@@ -1219,9 +1335,12 @@
       renderTransactions();
       updateEmailStatus();
     })();
-  </script>
+  
+      resumeOrLockPrivateSession();
+</script>
 
   <div id="emailToast" class="email-toast" role="status" aria-live="polite"></div>
 
+<div id="sessionExpiredMessage" class="pin-expired-message" hidden>Session expired. Please enter the PIN again.</div>
 </body>
 </html>
