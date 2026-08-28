@@ -993,6 +993,85 @@
 
   <script>
 
+      // Definitive tab re-authentication flag.
+      let MUST_REAUTHENTICATE_PRIVATE = true;
+
+      function forcePrivateReauthentication(){
+        MUST_REAUTHENTICATE_PRIVATE = true;
+        sessionStorage.removeItem("privateUnlocked");
+        sessionStorage.removeItem("privateSessionStartedAt");
+
+        document.documentElement.classList.add("private-locked");
+
+        const gate =
+          document.getElementById("pinGate") ||
+          document.getElementById("lockScreen") ||
+          document.querySelector(".pin-gate") ||
+          document.querySelector(".lock-screen");
+
+        const content =
+          document.getElementById("privateContent") ||
+          document.getElementById("accountContent") ||
+          document.querySelector(".private-content") ||
+          document.querySelector(".account-content") ||
+          document.querySelector(".private-shell") ||
+          document.querySelector(".account-shell");
+
+        if(content && content !== gate && !content.contains(gate)){
+          content.hidden = true;
+          content.style.display = "none";
+          content.style.visibility = "hidden";
+          content.style.opacity = "0";
+          content.style.pointerEvents = "none";
+          content.setAttribute("aria-hidden", "true");
+          try { content.inert = true; } catch(e) {}
+        }
+
+        if(gate){
+          gate.hidden = false;
+          gate.style.display = "flex";
+          gate.style.visibility = "visible";
+          gate.style.opacity = "1";
+          gate.style.pointerEvents = "auto";
+          gate.style.position = "fixed";
+          gate.style.inset = "0";
+          gate.style.zIndex = "2147483647";
+          gate.setAttribute("aria-hidden", "false");
+          try { gate.inert = false; } catch(e) {}
+        }
+
+        const pin = gate ? gate.querySelector('input[type="password"]') : document.querySelector('input[type="password"]');
+        if(pin) pin.value = "";
+      }
+
+      function markPrivateAuthenticated(){
+        MUST_REAUTHENTICATE_PRIVATE = false;
+      }
+
+      // Changing browser tab / hiding the page ALWAYS invalidates access.
+      document.addEventListener("visibilitychange", function(){
+        if(document.visibilityState === "hidden"){
+          forcePrivateReauthentication();
+        }else if(MUST_REAUTHENTICATE_PRIVATE){
+          forcePrivateReauthentication();
+        }
+      }, true);
+
+      window.addEventListener("pagehide", function(){
+        forcePrivateReauthentication();
+      }, true);
+
+      window.addEventListener("blur", function(){
+        forcePrivateReauthentication();
+      }, true);
+
+      window.addEventListener("focus", function(){
+        if(MUST_REAUTHENTICATE_PRIVATE){
+          forcePrivateReauthentication();
+        }
+      }, true);
+
+
       function getPrivateMain(){
         return document.querySelector("main");
       }
@@ -1075,6 +1154,7 @@
       }
 
       function definitiveUnlockPrivatePage(){
+        markPrivateAuthenticated();
         PRIVATE_PAGE_UNLOCKED = true;
         sessionStorage.setItem("privateUnlocked", "true");
         sessionStorage.setItem("privateSessionStartedAt", String(Date.now()));
