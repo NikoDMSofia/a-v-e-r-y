@@ -1380,6 +1380,19 @@
   function toast(msg,ok){if(!emailToast)return;emailToast.textContent=msg;emailToast.className="email-toast "+(ok?"success":"error")+" show";setTimeout(()=>emailToast.classList.remove("show"),4200)}
   async function mail(payload){try{const r=await fetch(FORMSPREE,{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify(payload)});return r.ok}catch(e){return false}}
 
+  
+  function orderOwnerChipsForProfile(){
+    if(currentUserId===NIKI_UID) return;
+    const all=[...document.querySelectorAll("span,button,div")];
+    const niki=all.find(el=>el.children.length===0 && el.textContent.trim()==="Niki");
+    const avery=all.find(el=>el.children.length===0 && el.textContent.trim()==="Avery");
+    if(!niki||!avery||niki.parentElement!==avery.parentElement) return;
+    const parent=niki.parentElement;
+    if(niki.compareDocumentPosition(avery)&Node.DOCUMENT_POSITION_FOLLOWING){
+      parent.insertBefore(avery,niki);
+    }
+  }
+
   function openMoney(type){
     txType=type;form.reset();transactionDate.value=today();modalError.textContent="";
     personName.value=currentUserId===NIKI_UID?"Ники":"Avery";
