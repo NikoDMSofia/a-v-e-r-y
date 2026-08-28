@@ -754,7 +754,288 @@
       text-shadow:0 0 14px rgba(57,229,140,.20);
     }
 
+  
+    .motivation-overlay{
+      position:fixed;
+      inset:0;
+      z-index:10050;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:22px;
+      background:rgba(2,14,31,.55);
+      backdrop-filter:blur(7px);
+    }
+    .motivation-overlay[hidden]{
+      display:none !important;
+    }
+    .motivation-box{
+      position:relative;
+      width:min(430px, 100%);
+      padding:30px 28px 28px;
+      border-radius:22px;
+      border:1px solid rgba(151,205,255,.22);
+      background:linear-gradient(145deg, rgba(8,35,68,.98), rgba(13,61,108,.98));
+      box-shadow:0 24px 80px rgba(0,10,28,.45);
+      text-align:center;
+    }
+    .motivation-close{
+      position:absolute;
+      top:10px;
+      right:12px;
+      width:34px;
+      height:34px;
+      display:grid;
+      place-items:center;
+      padding:0;
+      border:0;
+      border-radius:50%;
+      background:transparent;
+      color:#dcecff;
+      font-size:27px;
+      line-height:1;
+      cursor:pointer;
+      opacity:.82;
+    }
+    .motivation-close:hover{
+      background:rgba(255,255,255,.08);
+      opacity:1;
+    }
+    .motivation-icon{
+      font-size:34px;
+      margin-bottom:9px;
+    }
+    .motivation-title{
+      font-size:24px;
+      font-weight:800;
+      color:#63E6A3;
+      margin-bottom:8px;
+    }
+    .motivation-text{
+      color:#f2f7fc;
+      font-size:15px;
+      line-height:1.65;
+    }
+
+  
+    .withdraw-notice-overlay{
+      position:fixed;
+      inset:0;
+      z-index:10060;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:22px;
+      background:rgba(20,5,10,.58);
+      backdrop-filter:blur(7px);
+    }
+    .withdraw-notice-overlay[hidden]{
+      display:none !important;
+    }
+    .withdraw-notice-box{
+      position:relative;
+      width:min(450px, 100%);
+      padding:30px 28px 28px;
+      border-radius:22px;
+      border:1px solid rgba(255,135,145,.24);
+      background:linear-gradient(145deg, rgba(65,14,25,.98), rgba(104,25,38,.97));
+      box-shadow:0 24px 80px rgba(18,0,5,.48);
+      text-align:center;
+    }
+    .withdraw-notice-close{
+      position:absolute;
+      top:10px;
+      right:12px;
+      width:34px;
+      height:34px;
+      display:grid;
+      place-items:center;
+      padding:0;
+      border:0;
+      border-radius:50%;
+      background:transparent;
+      color:#ffe8eb;
+      font-size:27px;
+      line-height:1;
+      cursor:pointer;
+      opacity:.84;
+    }
+    .withdraw-notice-close:hover{
+      background:rgba(255,255,255,.08);
+      opacity:1;
+    }
+    .withdraw-notice-icon{
+      font-size:34px;
+      margin-bottom:9px;
+    }
+    .withdraw-notice-title{
+      font-size:23px;
+      font-weight:800;
+      color:#ff9ca7;
+      margin-bottom:10px;
+    }
+    .withdraw-notice-text{
+      color:#fff1f3;
+      font-size:15px;
+      line-height:1.68;
+    }
+    .withdraw-notice-text strong{
+      color:#ffffff;
+      font-weight:800;
+    }
+
+  
+    /* Hard privacy lock: never reveal account content while PIN is required */
+    html.private-locked body{
+      overflow:hidden !important;
+    }
+
+    html.private-locked .private-shell,
+    html.private-locked .account-shell,
+    html.private-locked .private-content,
+    html.private-locked .account-content,
+    html.private-locked #privateContent,
+    html.private-locked #accountContent{
+      display:none !important;
+      visibility:hidden !important;
+      opacity:0 !important;
+      pointer-events:none !important;
+      user-select:none !important;
+    }
+
+    html.private-locked .pin-gate,
+    html.private-locked .lock-screen,
+    html.private-locked #pinGate,
+    html.private-locked #lockScreen{
+      display:flex !important;
+      visibility:visible !important;
+      opacity:1 !important;
+      position:fixed !important;
+      inset:0 !important;
+      z-index:2147483647 !important;
+      background:
+        radial-gradient(circle at 20% 0%, rgba(40,101,165,.28), transparent 34%),
+        linear-gradient(145deg, #071A33 0%, #0B2F5B 58%, #082542 100%) !important;
+    }
+
   </style>
+
+  <script>
+
+      let PRIVATE_PAGE_UNLOCKED = false;
+
+      function getPrivateGate(){
+        return document.getElementById("pinGate") ||
+               document.getElementById("lockScreen") ||
+               document.querySelector(".pin-gate") ||
+               document.querySelector(".lock-screen");
+      }
+
+      function getPrivateContent(){
+        return document.getElementById("privateContent") ||
+               document.getElementById("accountContent") ||
+               document.querySelector(".private-content") ||
+               document.querySelector(".account-content") ||
+               document.querySelector(".private-shell") ||
+               document.querySelector(".account-shell");
+      }
+
+      function hardLockPrivatePage(showExpiredMessage){
+        PRIVATE_PAGE_UNLOCKED = false;
+        sessionStorage.removeItem("privateUnlocked");
+        sessionStorage.removeItem("privateSessionStartedAt");
+        document.documentElement.classList.add("private-locked");
+
+        const gate = getPrivateGate();
+        const content = getPrivateContent();
+
+        if(content){
+          content.hidden = true;
+          content.style.display = "none";
+          content.setAttribute("aria-hidden", "true");
+          try { content.inert = true; } catch(e) {}
+        }
+
+        if(gate){
+          gate.hidden = false;
+          gate.style.display = "flex";
+          gate.setAttribute("aria-hidden", "false");
+        }
+
+        const expired = document.getElementById("sessionExpiredMessage");
+        if(expired) expired.hidden = !showExpiredMessage;
+
+        const pin = document.querySelector('input[type="password"]');
+        if(pin){
+          pin.value = "";
+          setTimeout(() => pin.focus(), 50);
+        }
+      }
+
+      function hardUnlockPrivatePage(){
+        PRIVATE_PAGE_UNLOCKED = true;
+        document.documentElement.classList.remove("private-locked");
+        sessionStorage.setItem("privateUnlocked", "true");
+          hardUnlockPrivatePage();
+        sessionStorage.setItem("privateSessionStartedAt", String(Date.now()));
+
+        const gate = getPrivateGate();
+        const content = getPrivateContent();
+
+        if(gate){
+          gate.hidden = true;
+          gate.style.display = "none";
+          gate.setAttribute("aria-hidden", "true");
+        }
+
+        if(content){
+          content.hidden = false;
+          content.style.display = "";
+          content.style.visibility = "visible";
+          content.style.opacity = "1";
+          content.setAttribute("aria-hidden", "false");
+          try { content.inert = false; } catch(e) {}
+        }
+
+        const expired = document.getElementById("sessionExpiredMessage");
+        if(expired) expired.hidden = true;
+
+        if(typeof startPrivateSessionTimer === "function"){
+          startPrivateSessionTimer();
+        }
+      }
+
+      // Leaving the page in any practical way locks it immediately.
+      document.addEventListener("visibilitychange", function(){
+        if(document.hidden){
+          hardLockPrivatePage(false);
+        }
+      }, true);
+
+      window.addEventListener("blur", function(){
+        hardLockPrivatePage(false);
+      }, true);
+
+      window.addEventListener("pagehide", function(){
+        hardLockPrivatePage(false);
+      }, true);
+
+      window.addEventListener("beforeunload", function(){
+        sessionStorage.removeItem("privateUnlocked");
+        sessionStorage.removeItem("privateSessionStartedAt");
+        document.documentElement.classList.add("private-locked");
+      });
+
+      // Returning never auto-unlocks.
+      window.addEventListener("focus", function(){
+        if(!PRIVATE_PAGE_UNLOCKED){
+          hardLockPrivatePage(false);
+        }
+      }, true);
+
+    document.documentElement.classList.add("private-locked");
+  </script>
+
 </head>
 <body>
   <header>
@@ -969,7 +1250,7 @@
         if(privateSessionTimer) clearTimeout(privateSessionTimer);
         sessionStorage.setItem(PRIVATE_SESSION_STARTED_KEY, String(Date.now()));
         privateSessionTimer = setTimeout(() => {
-          lockPrivatePage(true);
+          hardLockPrivatePage(true);
           alert("Session expired. Please enter the PIN again.");
         }, PRIVATE_SESSION_LIMIT_MS);
       }
@@ -979,18 +1260,18 @@
         const started = Number(sessionStorage.getItem(PRIVATE_SESSION_STARTED_KEY) || 0);
 
         if(!unlocked || !started){
-          lockPrivatePage(false);
+          hardLockPrivatePage(false);
           return;
         }
 
         const elapsed = Date.now() - started;
         if(elapsed >= PRIVATE_SESSION_LIMIT_MS){
-          lockPrivatePage(true);
+          hardLockPrivatePage(true);
           return;
         }
 
         privateSessionTimer = setTimeout(() => {
-          lockPrivatePage(true);
+          hardLockPrivatePage(true);
           alert("Session expired. Please enter the PIN again.");
         }, PRIVATE_SESSION_LIMIT_MS - elapsed);
       }
@@ -1000,7 +1281,7 @@
         if(document.hidden){
           clearPrivateSession();
         }else{
-          lockPrivatePage(false);
+          hardLockPrivatePage(false);
         }
       });
 
@@ -1270,6 +1551,70 @@
         }
       }
 
+      
+      const motivationOverlay = document.getElementById("motivationOverlay");
+      const motivationClose = document.getElementById("motivationClose");
+
+      function showMotivationMessage(){
+        if(motivationOverlay) motivationOverlay.hidden = false;
+      }
+
+      function hideMotivationMessage(){
+        if(motivationOverlay) motivationOverlay.hidden = true;
+      }
+
+      if(motivationClose){
+        motivationClose.addEventListener("click", hideMotivationMessage);
+      }
+
+      if(motivationOverlay){
+        motivationOverlay.addEventListener("click", function(e){
+          if(e.target === motivationOverlay){
+            hideMotivationMessage();
+          }
+        });
+      }
+
+      document.addEventListener("keydown", function(e){
+        if(e.key === "Escape" && motivationOverlay && !motivationOverlay.hidden){
+          hideMotivationMessage();
+        }
+      });
+
+      
+      const withdrawNoticeOverlay = document.getElementById("withdrawNoticeOverlay");
+      const withdrawNoticeClose = document.getElementById("withdrawNoticeClose");
+      const withdrawNoticeName = document.getElementById("withdrawNoticeName");
+      const withdrawNoticeAmount = document.getElementById("withdrawNoticeAmount");
+
+      function showWithdrawNotice(name, amount){
+        if(withdrawNoticeName) withdrawNoticeName.textContent = name;
+        if(withdrawNoticeAmount) withdrawNoticeAmount.textContent = "€" + Number(amount).toFixed(2);
+        if(withdrawNoticeOverlay) withdrawNoticeOverlay.hidden = false;
+      }
+
+      function hideWithdrawNotice(){
+        if(withdrawNoticeOverlay) withdrawNoticeOverlay.hidden = true;
+      }
+
+      if(withdrawNoticeClose){
+        withdrawNoticeClose.addEventListener("click", hideWithdrawNotice);
+      }
+
+      if(withdrawNoticeOverlay){
+        withdrawNoticeOverlay.addEventListener("click", function(e){
+          if(e.target === withdrawNoticeOverlay){
+            hideWithdrawNotice();
+          }
+        });
+      }
+
+      document.addEventListener("keydown", function(e){
+        if(e.key === "Escape" && withdrawNoticeOverlay && !withdrawNoticeOverlay.hidden){
+          hideWithdrawNotice();
+        }
+      });
+
       form.addEventListener("submit", async function(e){
         e.preventDefault();
 
@@ -1318,6 +1663,12 @@
         renderTransactions();
         closeModal();
 
+        if(transactionType === "deposit"){
+          showMotivationMessage();
+        }else if(transactionType === "withdrawal"){
+          showWithdrawNotice(name, amount);
+        }
+
         // Email alert is sent after the local ledger has been updated.
         const emailSent = await sendTransactionEmail(transaction, balance);
         if(emailSent){
@@ -1355,10 +1706,35 @@
     })();
   
       resumeOrLockPrivateSession();
+
+      hardLockPrivatePage(false); // initial hard lock
 </script>
 
   <div id="emailToast" class="email-toast" role="status" aria-live="polite"></div>
 
 <div id="sessionExpiredMessage" class="pin-expired-message" hidden>Session expired. Please enter the PIN again.</div>
+
+  <div id="motivationOverlay" class="motivation-overlay" hidden>
+    <div class="motivation-box" role="dialog" aria-modal="true" aria-labelledby="motivationTitle">
+      <button id="motivationClose" class="motivation-close" type="button" aria-label="Close">×</button>
+      <div class="motivation-icon">🎯</div>
+      <div id="motivationTitle" class="motivation-title">Браво!</div>
+      <div class="motivation-text">Още една крачка по-близо до нашата цел.<br>Продължаваме напред заедно. 💙</div>
+    </div>
+  </div>
+
+
+  <div id="withdrawNoticeOverlay" class="withdraw-notice-overlay" hidden>
+    <div class="withdraw-notice-box" role="dialog" aria-modal="true" aria-labelledby="withdrawNoticeTitle">
+      <button id="withdrawNoticeClose" class="withdraw-notice-close" type="button" aria-label="Close">×</button>
+      <div class="withdraw-notice-icon">⚠️</div>
+      <div id="withdrawNoticeTitle" class="withdraw-notice-title">Крачка назад от целта</div>
+      <div class="withdraw-notice-text">
+        <strong id="withdrawNoticeName"></strong> изтегли <strong id="withdrawNoticeAmount"></strong> от общата сметка.<br>
+        Понякога е необходимо — просто нека не забравяме накъде сме тръгнали. 💙
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
