@@ -1302,31 +1302,6 @@
 
   let txType="deposit", rows=[], pinTimer=null, channel=null, unlocked=false, currentUserId=null;
   const NIKI_UID="47f3c30f-c570-4355-bbdc-971c47a5441e";
-  const AVERY_UID="027871d8-652e-49ce-8914-3e00ebb9d149";
-  
-  function transactionProfileName(){
-    if(currentUserId===NIKI_UID) return "Ники";
-    if(currentUserId===AVERY_UID) return "Avery";
-    return "";
-  }
-  function lockTransactionNameField(){
-    const candidates=[
-      document.getElementById("txName"),
-      document.getElementById("transactionName"),
-      document.getElementById("nameInput"),
-      document.querySelector('#transactionModal input[name="name"]'),
-      document.querySelector('input[name="name"]')
-    ].filter(Boolean);
-    const input=candidates[0];
-    if(!input) return;
-    input.value=transactionProfileName();
-    input.readOnly=true;
-    input.setAttribute("aria-readonly","true");
-    input.setAttribute("autocomplete","off");
-    input.style.cursor="default";
-    input.style.opacity="1";
-  }
-
   function applyAccountBadge(){
     const old=document.getElementById("averyAccountBadge");
     if(old) old.remove();
@@ -1407,6 +1382,8 @@
 
   function openMoney(type){
     txType=type;form.reset();transactionDate.value=today();modalError.textContent="";
+    personName.value=currentUserId===NIKI_UID?"Ники":"Avery";
+    personName.readOnly=true;
     modalTitle.textContent=type==="withdrawal"?"Withdraw Money":"Add Money";
     modalDescription.textContent=type==="withdrawal"?"Enter who is withdrawing the money, the amount, and the date.":"Enter who is adding the money, the amount, and the date.";
     confirmMoneyBtn.textContent=modalTitle.textContent;modal.classList.add("show");modal.setAttribute("aria-hidden","false");
@@ -1415,7 +1392,7 @@
   document.querySelectorAll("[data-close-modal]").forEach(x=>x.onclick=()=>{modal.classList.remove("show");modal.setAttribute("aria-hidden","true")});
 
   form.addEventListener("submit",async e=>{
-    e.preventDefault();const name=personName.value.trim(), amount=Number(moneyAmount.value), date=transactionDate.value;
+    e.preventDefault();const name=currentUserId===NIKI_UID?"Ники":"Avery", amount=Number(moneyAmount.value), date=transactionDate.value;
     if(!name||!Number.isFinite(amount)||amount<=0||!date){modalError.textContent="Please complete all transaction details.";return}
     if(txType==="withdrawal"&&amount>balance()){modalError.textContent="Insufficient balance.";return}
     confirmMoneyBtn.disabled=true;
