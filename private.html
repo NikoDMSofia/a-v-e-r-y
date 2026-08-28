@@ -935,9 +935,209 @@
       background:rgba(255,255,255,.07);
     }
 
+  
+    /* Definitive PIN lock visibility rules */
+    html.private-locked body{
+      overflow:hidden !important;
+    }
+
+    html.private-locked .private-shell,
+    html.private-locked .account-shell,
+    html.private-locked .account-card,
+    html.private-locked .private-card,
+    html.private-locked #privateContent,
+    html.private-locked #accountContent{
+      display:none !important;
+      visibility:hidden !important;
+      opacity:0 !important;
+      pointer-events:none !important;
+      user-select:none !important;
+    }
+
+    html.private-locked #pinGate,
+    html.private-locked #lockScreen,
+    html.private-locked .pin-gate,
+    html.private-locked .lock-screen{
+      display:flex !important;
+      visibility:visible !important;
+      opacity:1 !important;
+      pointer-events:auto !important;
+      position:fixed !important;
+      inset:0 !important;
+      z-index:2147483647 !important;
+      background:
+        radial-gradient(circle at 20% 0%, rgba(40,101,165,.28), transparent 34%),
+        linear-gradient(145deg, #071A33 0%, #0B2F5B 58%, #082542 100%) !important;
+    }
+
+  
+    /* Mobile-safe PIN gate: always visible when locked */
+    html.private-locked #pinGate,
+    html.private-locked #lockScreen,
+    html.private-locked .pin-gate,
+    html.private-locked .lock-screen{
+      display:flex !important;
+      align-items:center !important;
+      justify-content:center !important;
+      min-height:100dvh !important;
+      width:100% !important;
+      visibility:visible !important;
+      opacity:1 !important;
+      pointer-events:auto !important;
+      position:fixed !important;
+      inset:0 !important;
+      z-index:2147483647 !important;
+    }
+
   </style>
 
   <script>
+
+      function getPrivateMain(){
+        return document.querySelector("main");
+      }
+
+      function definitiveLockPrivatePage(showExpiredMessage){
+        PRIVATE_PAGE_UNLOCKED = false;
+        sessionStorage.removeItem("privateUnlocked");
+        sessionStorage.removeItem("privateSessionStartedAt");
+        document.documentElement.classList.add("private-locked");
+
+        const gate = getPrivateGate ? getPrivateGate() :
+          (document.getElementById("pinGate") ||
+           document.getElementById("lockScreen") ||
+           document.querySelector(".pin-gate") ||
+           document.querySelector(".lock-screen"));
+
+        const content = getPrivateContent ? getPrivateContent() :
+          (document.getElementById("privateContent") ||
+           document.getElementById("accountContent") ||
+           document.querySelector(".private-content") ||
+           document.querySelector(".account-content") ||
+           document.querySelector(".private-shell") ||
+           document.querySelector(".account-shell"));
+
+        // Hide ONLY the account content. Never hide ancestors that may contain the PIN gate.
+        if(content && content !== gate && !content.contains(gate)){
+          content.hidden = true;
+          content.style.display = "none";
+          content.style.visibility = "hidden";
+          content.style.opacity = "0";
+          content.style.pointerEvents = "none";
+          content.setAttribute("aria-hidden", "true");
+          try { content.inert = true; } catch(e) {}
+        }
+
+        // PIN gate must always remain visible and interactive.
+        if(gate){
+          gate.hidden = false;
+          gate.style.display = "flex";
+          gate.style.visibility = "visible";
+          gate.style.opacity = "1";
+          gate.style.pointerEvents = "auto";
+          gate.style.position = "fixed";
+          gate.style.inset = "0";
+          gate.style.zIndex = "2147483647";
+          gate.setAttribute("aria-hidden", "false");
+          try { gate.inert = false; } catch(e) {}
+        }
+
+        const expired = document.getElementById("sessionExpiredMessage");
+        if(expired) expired.hidden = !showExpiredMessage;
+
+        const pin = gate ? gate.querySelector('input[type="password"]') : document.querySelector('input[type="password"]');
+        if(pin){
+          pin.value = "";
+          setTimeout(() => {
+            try { pin.focus({preventScroll:true}); } catch(e) { pin.focus(); }
+          }, 100);
+        }
+      }
+        });
+
+        if(gate){
+          gate.hidden = false;
+          gate.style.display = "flex";
+          gate.style.visibility = "visible";
+          gate.style.opacity = "1";
+          gate.style.pointerEvents = "auto";
+          gate.setAttribute("aria-hidden", "false");
+        }
+
+        const expired = document.getElementById("sessionExpiredMessage");
+        if(expired) expired.hidden = !showExpiredMessage;
+
+        const pin = document.querySelector('input[type="password"]');
+        if(pin){
+          pin.value = "";
+          setTimeout(() => pin.focus(), 50);
+        }
+      }
+
+      function definitiveUnlockPrivatePage(){
+        PRIVATE_PAGE_UNLOCKED = true;
+        sessionStorage.setItem("privateUnlocked", "true");
+        sessionStorage.setItem("privateSessionStartedAt", String(Date.now()));
+        document.documentElement.classList.remove("private-locked");
+
+        const gate = getPrivateGate ? getPrivateGate() :
+          (document.getElementById("pinGate") ||
+           document.getElementById("lockScreen") ||
+           document.querySelector(".pin-gate") ||
+           document.querySelector(".lock-screen"));
+
+        const content = getPrivateContent ? getPrivateContent() :
+          (document.getElementById("privateContent") ||
+           document.getElementById("accountContent") ||
+           document.querySelector(".private-content") ||
+           document.querySelector(".account-content") ||
+           document.querySelector(".private-shell") ||
+           document.querySelector(".account-shell"));
+
+        if(gate){
+          gate.hidden = true;
+          gate.style.display = "none";
+          gate.setAttribute("aria-hidden", "true");
+        }
+
+        if(content && content !== gate){
+          content.hidden = false;
+          content.style.display = "";
+          content.style.visibility = "visible";
+          content.style.opacity = "1";
+          content.style.pointerEvents = "";
+          content.setAttribute("aria-hidden", "false");
+          try { content.inert = false; } catch(e) {}
+        }
+
+        const expired = document.getElementById("sessionExpiredMessage");
+        if(expired) expired.hidden = true;
+
+        if(typeof startPrivateSessionTimer === "function"){
+          startPrivateSessionTimer();
+        }
+      }
+
+        [main, content].forEach(el => {
+          if(el){
+            el.hidden = false;
+            el.style.display = "";
+            el.style.visibility = "visible";
+            el.style.opacity = "1";
+            el.style.pointerEvents = "";
+            el.setAttribute("aria-hidden", "false");
+            try { el.inert = false; } catch(e) {}
+          }
+        });
+
+        const expired = document.getElementById("sessionExpiredMessage");
+        if(expired) expired.hidden = true;
+
+        if(typeof startPrivateSessionTimer === "function"){
+          startPrivateSessionTimer();
+        }
+      }
+
 
       let PRIVATE_PAGE_UNLOCKED = false;
 
@@ -993,7 +1193,7 @@
         PRIVATE_PAGE_UNLOCKED = true;
         document.documentElement.classList.remove("private-locked");
         sessionStorage.setItem("privateUnlocked", "true");
-          hardUnlockPrivatePage();
+          definitiveUnlockPrivatePage();
         sessionStorage.setItem("privateSessionStartedAt", String(Date.now()));
 
         const gate = getPrivateGate();
@@ -1025,16 +1225,16 @@
       // Leaving the page in any practical way locks it immediately.
       document.addEventListener("visibilitychange", function(){
         if(document.hidden){
-          hardLockPrivatePage(false);
+          definitiveLockPrivatePage(false);
         }
       }, true);
 
       window.addEventListener("blur", function(){
-        hardLockPrivatePage(false);
+        definitiveLockPrivatePage(false);
       }, true);
 
       window.addEventListener("pagehide", function(){
-        hardLockPrivatePage(false);
+        definitiveLockPrivatePage(false);
       }, true);
 
       window.addEventListener("beforeunload", function(){
@@ -1046,7 +1246,7 @@
       // Returning never auto-unlocks.
       window.addEventListener("focus", function(){
         if(!PRIVATE_PAGE_UNLOCKED){
-          hardLockPrivatePage(false);
+          definitiveLockPrivatePage(false);
         }
       }, true);
 
@@ -1270,7 +1470,7 @@
         if(privateSessionTimer) clearTimeout(privateSessionTimer);
         sessionStorage.setItem(PRIVATE_SESSION_STARTED_KEY, String(Date.now()));
         privateSessionTimer = setTimeout(() => {
-          hardLockPrivatePage(true);
+          definitiveLockPrivatePage(true);
           alert("Session expired. Please enter the PIN again.");
         }, PRIVATE_SESSION_LIMIT_MS);
       }
@@ -1280,18 +1480,18 @@
         const started = Number(sessionStorage.getItem(PRIVATE_SESSION_STARTED_KEY) || 0);
 
         if(!unlocked || !started){
-          hardLockPrivatePage(false);
+          definitiveLockPrivatePage(false);
           return;
         }
 
         const elapsed = Date.now() - started;
         if(elapsed >= PRIVATE_SESSION_LIMIT_MS){
-          hardLockPrivatePage(true);
+          definitiveLockPrivatePage(true);
           return;
         }
 
         privateSessionTimer = setTimeout(() => {
-          hardLockPrivatePage(true);
+          definitiveLockPrivatePage(true);
           alert("Session expired. Please enter the PIN again.");
         }, PRIVATE_SESSION_LIMIT_MS - elapsed);
       }
@@ -1301,7 +1501,7 @@
         if(document.hidden){
           clearPrivateSession();
         }else{
-          hardLockPrivatePage(false);
+          definitiveLockPrivatePage(false);
         }
       });
 
@@ -1727,7 +1927,7 @@
   
       resumeOrLockPrivateSession();
 
-      hardLockPrivatePage(false); // initial hard lock
+      definitiveLockPrivatePage(false); // initial hard lock
 
 
       // TEMPORARY maintenance control — remove after testing.
@@ -1758,6 +1958,29 @@
           alert("Transaction history has been deleted and the balance is now €0.00.");
         });
       }
+
+
+      document.addEventListener("visibilitychange", function(){
+        if(document.hidden){
+          definitiveLockPrivatePage(false);
+        }
+      }, true);
+
+      window.addEventListener("blur", function(){
+        definitiveLockPrivatePage(false);
+      }, true);
+
+      window.addEventListener("pagehide", function(){
+        definitiveLockPrivatePage(false);
+      }, true);
+
+      window.addEventListener("focus", function(){
+        if(sessionStorage.getItem("privateUnlocked") !== "true"){
+          definitiveLockPrivatePage(false);
+        }
+      }, true);
+
+      definitiveLockPrivatePage(false); // definitive initial lock
 </script>
 
   <div id="emailToast" class="email-toast" role="status" aria-live="polite"></div>
