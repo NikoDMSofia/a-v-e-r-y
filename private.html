@@ -736,6 +736,24 @@
       color:var(--bank-text) !important;
     }
 
+  
+    /* Clear active-status indicator */
+    .status-active,
+    .active-status,
+    .status-value.active,
+    [data-status="active"]{
+      color:#63E6A3 !important;
+      font-weight:700 !important;
+    }
+
+  
+    /* Exact Status → Active indicator */
+    .status-active-final{
+      color:#39E58C !important;
+      font-weight:800 !important;
+      text-shadow:0 0 14px rgba(57,229,140,.20);
+    }
+
   </style>
 </head>
 <body>
@@ -811,7 +829,7 @@
             </div>
             <div>
               <span class="muted">Status</span>
-              <strong>Active</strong>
+              <strong class="status-active-final">Active</strong>
             </div>
           </div>
         </article>
