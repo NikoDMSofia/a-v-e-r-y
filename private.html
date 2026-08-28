@@ -1302,6 +1302,31 @@
 
   let txType="deposit", rows=[], pinTimer=null, channel=null, unlocked=false, currentUserId=null;
   const NIKI_UID="47f3c30f-c570-4355-bbdc-971c47a5441e";
+  const AVERY_UID="027871d8-652e-49ce-8914-3e00ebb9d149";
+  
+  function transactionProfileName(){
+    if(currentUserId===NIKI_UID) return "Ники";
+    if(currentUserId===AVERY_UID) return "Avery";
+    return "";
+  }
+  function lockTransactionNameField(){
+    const candidates=[
+      document.getElementById("txName"),
+      document.getElementById("transactionName"),
+      document.getElementById("nameInput"),
+      document.querySelector('#transactionModal input[name="name"]'),
+      document.querySelector('input[name="name"]')
+    ].filter(Boolean);
+    const input=candidates[0];
+    if(!input) return;
+    input.value=transactionProfileName();
+    input.readOnly=true;
+    input.setAttribute("aria-readonly","true");
+    input.setAttribute("autocomplete","off");
+    input.style.cursor="default";
+    input.style.opacity="1";
+  }
+
   function applyAccountBadge(){
     const old=document.getElementById("averyAccountBadge");
     if(old) old.remove();
