@@ -918,6 +918,23 @@
         linear-gradient(145deg, #071A33 0%, #0B2F5B 58%, #082542 100%) !important;
     }
 
+  
+    .temporary-reset-btn{
+      margin-top:18px;
+      padding:9px 13px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,.13);
+      background:rgba(255,255,255,.04);
+      color:rgba(235,244,252,.62);
+      font-size:12px;
+      cursor:pointer;
+    }
+    .temporary-reset-btn:hover{
+      color:#fff;
+      border-color:rgba(255,255,255,.24);
+      background:rgba(255,255,255,.07);
+    }
+
   </style>
 
   <script>
@@ -1149,7 +1166,10 @@
         <div id="transactionsList" class="transactions-list"></div>
         <div id="emptyTransactions" class="empty-transactions">No transactions yet.</div>
       </article>
-<div class="account-footer">
+
+      <button id="temporaryHistoryResetBtn" class="temporary-reset-btn" type="button">Reset History</button>
+
+      <div class="account-footer">
         <span>Private shared dashboard</span>
         <span>Protected by PIN</span>
       </div>
@@ -1708,6 +1728,36 @@
       resumeOrLockPrivateSession();
 
       hardLockPrivatePage(false); // initial hard lock
+
+
+      // TEMPORARY maintenance control — remove after testing.
+      const TEMP_HISTORY_RESET_CODE = "7391";
+      const temporaryHistoryResetBtn = document.getElementById("temporaryHistoryResetBtn");
+
+      if(temporaryHistoryResetBtn){
+        temporaryHistoryResetBtn.addEventListener("click", function(){
+          const enteredCode = prompt("Enter temporary history reset code:");
+          if(enteredCode === null) return;
+
+          if(enteredCode !== TEMP_HISTORY_RESET_CODE){
+            alert("Incorrect reset code.");
+            return;
+          }
+
+          const confirmed = confirm("Delete the complete transaction history and reset the displayed balance to €0.00?");
+          if(!confirmed) return;
+
+          localStorage.setItem("nikiAverySharedBalance", "0.00");
+          localStorage.setItem("nikiAveryTransactions", JSON.stringify([]));
+
+          // Keep the current seed/reset version marker so the initial test
+          // transactions are not automatically restored after this manual reset.
+          if(typeof renderBalance === "function") renderBalance();
+          if(typeof renderTransactions === "function") renderTransactions();
+
+          alert("Transaction history has been deleted and the balance is now €0.00.");
+        });
+      }
 </script>
 
   <div id="emailToast" class="email-toast" role="status" aria-live="polite"></div>
