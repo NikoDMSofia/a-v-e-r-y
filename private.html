@@ -1343,7 +1343,7 @@
   function unlock(){
     if(pinInput.value!==PIN){pinMessage.textContent="Incorrect PIN.";pinInput.value="";pinInput.focus();return}
     unlocked=true; sessionStorage.setItem("privateUnlocked","1");sessionStorage.setItem("privateSessionStartedAt",String(Date.now()));
-    lockView.style.display="none";accountView.style.display="block";accountView.classList.add("show");pinMessage.textContent="";armTimer();loadRows();
+    lockView.style.display="none";syncOwnerChipOrder();accountView.style.display="block";accountView.classList.add("show");pinMessage.textContent="";armTimer();loadRows();
   }
   unlockBtn.addEventListener("click",unlock); pinInput.addEventListener("keydown",e=>{if(e.key==="Enter")unlock()});
   document.addEventListener("visibilitychange",()=>{if(document.hidden&&unlocked)hardLock(false)});
@@ -1381,15 +1381,20 @@
   async function mail(payload){try{const r=await fetch(FORMSPREE,{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify(payload)});return r.ok}catch(e){return false}}
 
   
-  function orderOwnerChipsForProfile(){
-    if(currentUserId===NIKI_UID) return;
-    const all=[...document.querySelectorAll("span,button,div")];
-    const niki=all.find(el=>el.children.length===0 && el.textContent.trim()==="Niki");
-    const avery=all.find(el=>el.children.length===0 && el.textContent.trim()==="Avery");
-    if(!niki||!avery||niki.parentElement!==avery.parentElement) return;
-    const parent=niki.parentElement;
-    if(niki.compareDocumentPosition(avery)&Node.DOCUMENT_POSITION_FOLLOWING){
-      parent.insertBefore(avery,niki);
+  function syncOwnerChipOrder(){
+    const owners=document.querySelector(".owners");
+    if(!owners) return;
+    const chips=[...owners.querySelectorAll(".owner-chip")];
+    const niki=chips.find(el=>el.textContent.trim()==="Niki");
+    const avery=chips.find(el=>el.textContent.trim()==="Avery");
+    const shared=chips.find(el=>el.textContent.trim()==="Shared account");
+    if(!niki||!avery||!shared) return;
+
+    owners.innerHTML="";
+    if(currentUserId===NIKI_UID){
+      owners.append(niki,avery,shared);
+    }else{
+      owners.append(avery,niki,shared);
     }
   }
 
@@ -1445,7 +1450,7 @@
   document.addEventListener("keydown",e=>{if(e.key==="Escape"){if(!delOverlay.hidden)closeDelete();$("motivationOverlay").hidden=true;$("withdrawNoticeOverlay").hidden=true;if(modal.classList.contains("show")){modal.classList.remove("show");modal.setAttribute("aria-hidden","true")}}});
 
   const {data:{session}}=await sb.auth.getSession();
-  if(session){currentUserId=session.user?.id||null;applyProfileIdentity();auth.style.display="none";lockView.style.display="flex";accountView.style.display="none"}
+  if(session){currentUserId=session.user?.id||null;syncOwnerChipOrder();applyProfileIdentity();auth.style.display="none";lockView.style.display="flex";accountView.style.display="none"}
   else{auth.style.display="block";lockView.style.display="none";accountView.style.display="none"}
 
   $("backendLoginForm").addEventListener("submit",async e=>{
