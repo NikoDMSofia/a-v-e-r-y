@@ -1094,8 +1094,14 @@
 .goal-entry.achieved{background:linear-gradient(135deg,rgba(28,112,70,.34),rgba(14,70,49,.24));border-color:rgba(98,213,139,.48);box-shadow:0 0 0 1px rgba(98,213,139,.08),0 10px 28px rgba(15,100,60,.14)}.goal-entry.achieved .goal-entry-icon{background:rgba(98,213,139,.16)}.goal-entry.achieved .goal-entry-title,.goal-entry.achieved .goal-entry-status{color:#72e39a}.goal-entry.achieved .goal-entry-amount{color:#8ce7ab}.goal-entry.achieved.goal-celebrate{animation:goalCelebrate 2.6s ease both}@keyframes goalCelebrate{0%,100%{transform:scale(1);box-shadow:0 0 0 1px rgba(98,213,139,.08),0 10px 28px rgba(15,100,60,.14)}35%{transform:scale(1.012);box-shadow:0 0 24px rgba(98,213,139,.36),0 12px 34px rgba(15,100,60,.24)}}.goal-spend-wrap{display:flex;flex-direction:column;align-items:flex-end;gap:8px}.goal-spend-btn{appearance:none;border:1px solid rgba(120,232,160,.62);background:rgba(42,145,89,.22);color:#9af0b8;border-radius:10px;padding:7px 12px;font-size:11px;font-weight:800;letter-spacing:.06em;cursor:pointer;transition:.18s ease}.goal-spend-btn:hover{background:rgba(42,145,89,.34);transform:translateY(-1px)}.goal-spend-btn:disabled{opacity:.55;cursor:wait;transform:none}.goal-entry.spent{background:linear-gradient(135deg,rgba(35,108,73,.28),rgba(9,51,39,.22));border-color:rgba(111,218,153,.38);opacity:.94}.goal-entry.spent .goal-entry-icon{background:rgba(111,218,153,.15)}.goal-entry.spent .goal-entry-title,.goal-entry.spent .goal-entry-status{color:#7fe2a6}.goal-entry.spent .goal-entry-amount{color:#b9f2cf}.goal-entry.spent .goal-entry-meta{color:rgba(255,255,255,.68)}
 @media(max-width:700px){.goals-head{align-items:flex-start;flex-direction:column}.goals-total{text-align:left}.goal-entry{grid-template-columns:auto 1fr}.goal-entry-amount{grid-column:2;text-align:left}}
 </style>
+
+<style id="websiteReturnFloatingStyle">
+.website-return-floating{position:fixed;left:16px;bottom:16px;z-index:10050;display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;background:rgba(8,32,63,.88);border:1px solid rgba(255,255,255,.22);color:#fff;text-decoration:none;font:700 12px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.02em;box-shadow:0 8px 24px rgba(0,0,0,.24);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:transform .18s ease,background .18s ease,box-shadow .18s ease}.website-return-floating:hover{transform:translateY(-2px);background:rgba(12,48,91,.96);box-shadow:0 10px 28px rgba(0,0,0,.3)}.website-return-floating:focus-visible{outline:2px solid #fff;outline-offset:3px}@media(max-width:520px){.website-return-floating{left:12px;bottom:12px;padding:9px 12px;font-size:11px}}
+</style>
 </head>
 <body>
+<a class="website-return-floating" href="index.html" aria-label="Return to website home">← Back to Website</a>
+
   <header>
     <nav class="navlinks">
       <a href="index.html">Home</a>
