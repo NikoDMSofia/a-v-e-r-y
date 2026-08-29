@@ -1088,8 +1088,10 @@
 .goals-card{margin-top:22px;padding:24px;border-radius:24px;background:linear-gradient(145deg,rgba(12,35,67,.96),rgba(8,25,49,.96));border:1px solid rgba(255,255,255,.10);box-shadow:0 18px 50px rgba(0,0,0,.18)}
 .goals-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:16px}
 .goals-head h3{margin:4px 0 0}.goals-total{text-align:right}.goals-total span{display:block;font-size:11px;color:rgba(255,255,255,.58);text-transform:uppercase;letter-spacing:.08em}.goals-total strong{display:block;margin-top:3px;font-size:20px;color:#fff}
-.goals-list{display:grid;gap:12px}.goal-entry{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:13px;padding:15px 16px;border-radius:16px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.08)}
-.goal-entry-icon{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:rgba(255,255,255,.08);font-size:18px}.goal-entry-title{font-weight:700;color:#fff}.goal-entry-meta{margin-top:3px;font-size:12px;color:rgba(255,255,255,.62)}.goal-entry-amount{text-align:right;font-weight:800;color:#fff}.goal-entry-status{display:block;margin-top:4px;font-size:11px;font-weight:700}.goal-entry.achieved .goal-entry-status{color:#62d58b}.goal-entry.pending .goal-entry-status{color:#e8c56a}.goals-empty{padding:16px;text-align:center;color:rgba(255,255,255,.6);font-size:13px}
+.goals-list{display:grid;gap:12px}.goal-entry{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:13px;padding:15px 16px;border-radius:16px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.08);transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
+.goal-entry-icon{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:rgba(255,255,255,.08);font-size:18px}.goal-entry-title{font-weight:700;color:#fff}.goal-entry-meta{margin-top:3px;font-size:12px;color:rgba(255,255,255,.62)}.goal-entry-amount{text-align:right;font-weight:800;color:#fff}.goal-entry-status{display:block;margin-top:4px;font-size:11px;font-weight:700}.goal-entry.pending .goal-entry-status{color:#e8c56a}.goals-empty{padding:16px;text-align:center;color:rgba(255,255,255,.6);font-size:13px}
+.goal-progress{height:6px;margin-top:9px;border-radius:999px;overflow:hidden;background:rgba(255,255,255,.10)}.goal-progress-fill{height:100%;border-radius:inherit;background:rgba(232,197,106,.85);transition:width .45s ease}.goal-progress-text{margin-top:5px;font-size:11px;color:rgba(255,255,255,.56)}
+.goal-entry.achieved{background:linear-gradient(135deg,rgba(28,112,70,.34),rgba(14,70,49,.24));border-color:rgba(98,213,139,.48);box-shadow:0 0 0 1px rgba(98,213,139,.08),0 10px 28px rgba(15,100,60,.14)}.goal-entry.achieved .goal-entry-icon{background:rgba(98,213,139,.16)}.goal-entry.achieved .goal-entry-title,.goal-entry.achieved .goal-entry-status{color:#72e39a}.goal-entry.achieved .goal-entry-amount{color:#8ce7ab}.goal-entry.achieved.goal-celebrate{animation:goalCelebrate 2.6s ease both}@keyframes goalCelebrate{0%,100%{transform:scale(1);box-shadow:0 0 0 1px rgba(98,213,139,.08),0 10px 28px rgba(15,100,60,.14)}35%{transform:scale(1.012);box-shadow:0 0 24px rgba(98,213,139,.36),0 12px 34px rgba(15,100,60,.24)}}.goal-spend-wrap{display:flex;flex-direction:column;align-items:flex-end;gap:8px}.goal-spend-btn{appearance:none;border:1px solid rgba(120,232,160,.62);background:rgba(42,145,89,.22);color:#9af0b8;border-radius:10px;padding:7px 12px;font-size:11px;font-weight:800;letter-spacing:.06em;cursor:pointer;transition:.18s ease}.goal-spend-btn:hover{background:rgba(42,145,89,.34);transform:translateY(-1px)}.goal-spend-btn:disabled{opacity:.55;cursor:wait;transform:none}.goal-entry.spent{background:linear-gradient(135deg,rgba(35,108,73,.28),rgba(9,51,39,.22));border-color:rgba(111,218,153,.38);opacity:.94}.goal-entry.spent .goal-entry-icon{background:rgba(111,218,153,.15)}.goal-entry.spent .goal-entry-title,.goal-entry.spent .goal-entry-status{color:#7fe2a6}.goal-entry.spent .goal-entry-amount{color:#b9f2cf}.goal-entry.spent .goal-entry-meta{color:rgba(255,255,255,.68)}
 @media(max-width:700px){.goals-head{align-items:flex-start;flex-direction:column}.goals-total{text-align:left}.goal-entry{grid-template-columns:auto 1fr}.goal-entry-amount{grid-column:2;text-align:left}}
 </style>
 </head>
@@ -1426,15 +1428,83 @@
     goalsList.innerHTML="";
     if(!goals.length){if(emptyGoals)emptyGoals.style.display="block";return}
     if(emptyGoals)emptyGoals.style.display="none";
-    [...goals].sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)||a.id-b.id).forEach(g=>{
+
+    const rank=g=>g.status==="pending"?0:g.status==="achieved"?1:2;
+    const ordered=[...goals].sort((a,b)=>{
+      const ar=rank(a), br=rank(b);
+      if(ar!==br) return ar-br;
+      if(ar>0){
+        const at=new Date((a.status==="spent"?a.spent_at:a.achieved_at)||0).getTime();
+        const bt=new Date((b.status==="spent"?b.spent_at:b.achieved_at)||0).getTime();
+        return bt-at;
+      }
+      return (a.sort_order||0)-(b.sort_order||0)||a.id-b.id;
+    });
+
+    let progressCapital=Math.max(0,transactionBalance()-allocated);
+    ordered.forEach(g=>{
       const achieved=g.status==="achieved";
-      const row=document.createElement("div");row.className="goal-entry "+(achieved?"achieved":"pending");
-      row.innerHTML=`<div class="goal-entry-icon">🎯</div><div><div class="goal-entry-title"></div><div class="goal-entry-meta"></div></div><div class="goal-entry-amount"></div>`;
-      row.querySelector(".goal-entry-title").textContent=g.title;
-      row.querySelector(".goal-entry-meta").innerHTML=achieved?'Reserved in Goals · <span class="goal-entry-status">Goal reached</span>':'Waiting to be reached · <span class="goal-entry-status">In progress</span>';
-      row.querySelector(".goal-entry-amount").textContent=eur(achieved?g.allocated_amount:g.target_amount);
+      const spent=g.status==="spent";
+      const target=Number(g.target_amount||0);
+      const toward=(achieved||spent)?target:Math.min(progressCapital,target);
+      if(!achieved&&!spent) progressCapital=Math.max(0,progressCapital-target);
+      const pct=target>0?Math.min(100,Math.round((toward/target)*100)):0;
+      const row=document.createElement("div");
+      row.className="goal-entry "+(spent?"spent":achieved?"achieved":"pending");
+      row.innerHTML=`<div class="goal-entry-icon"></div><div><div class="goal-entry-title"></div><div class="goal-entry-meta"></div></div><div class="goal-entry-amount"></div>`;
+      row.querySelector(".goal-entry-icon").textContent=spent?"✅":achieved?"🎉":"🎯";
+      row.querySelector(".goal-entry-title").textContent=g.title+(spent?" — COMPLETED":achieved?" — GOAL REACHED!":"");
+      const meta=row.querySelector(".goal-entry-meta");
+      const amountBox=row.querySelector(".goal-entry-amount");
+
+      if(spent){
+        let completed="Completed · Money spent";
+        if(g.spent_at) completed+=" · "+new Intl.DateTimeFormat("en-GB",{day:"2-digit",month:"short",year:"numeric"}).format(new Date(g.spent_at));
+        meta.innerHTML=`Goal reached and funds used 💚<span class="goal-entry-status">${completed}</span>`;
+        amountBox.textContent=eur(target)+" spent";
+      }else if(achieved){
+        let completed="Completed";
+        if(g.achieved_at) completed+=" · "+new Intl.DateTimeFormat("en-GB",{day:"2-digit",month:"short",year:"numeric"}).format(new Date(g.achieved_at));
+        meta.innerHTML=`${completed} 💚<span class="goal-entry-status">Goal reached ✓</span>`;
+
+        if(currentUserId===NIKI_UID && !guestMode){
+          const wrap=document.createElement("div");
+          wrap.className="goal-spend-wrap";
+          const saved=document.createElement("div");
+          saved.textContent=eur(g.allocated_amount||target)+" saved";
+          const btn=document.createElement("button");
+          btn.type="button";
+          btn.className="goal-spend-btn";
+          btn.textContent="SPEND";
+          btn.onclick=()=>spendGoal(g,btn);
+          wrap.append(saved,btn);
+          amountBox.replaceWith(wrap);
+        }else{
+          amountBox.textContent=eur(g.allocated_amount||target)+" saved";
+        }
+      }else{
+        meta.innerHTML=`<span class="goal-entry-status">In progress</span><div class="goal-progress"><div class="goal-progress-fill" style="width:${pct}%"></div></div><div class="goal-progress-text">${eur(toward)} / ${eur(target)} · ${pct}%</div>`;
+        amountBox.textContent=eur(target);
+      }
       goalsList.appendChild(row);
     });
+  }
+
+  async function spendGoal(goal,button){
+    if(guestMode || currentUserId!==NIKI_UID || goal.status!=="achieved") return;
+    const amount=Number(goal.allocated_amount||goal.target_amount||0);
+    if(!confirm(`Spend ${eur(amount)} for ${goal.title}?\n\nThis will mark the goal as completed and record the money as spent.`)) return;
+    button.disabled=true;
+    button.textContent="SPENDING…";
+    const {error}=await sb.rpc("spend_goal",{p_goal_id:goal.id});
+    if(error){
+      button.disabled=false;
+      button.textContent="SPEND";
+      alert("Spend failed: "+error.message);
+      return;
+    }
+    await loadRows();
+    toast(`${goal.title} marked as completed. ${eur(amount)} spent.`,true);
   }
 
   function render(){
@@ -1461,7 +1531,7 @@
   async function loadRows(){
     const [txRes,goalRes]=await Promise.all([
       sb.from("transactions").select("id,name,type,amount,transaction_date,created_at"),
-      sb.from("goals").select("id,title,target_amount,allocated_amount,status,sort_order,achieved_at,created_at")
+      sb.from("goals").select("id,title,target_amount,allocated_amount,status,sort_order,achieved_at,spent_at,spent_by,created_at")
     ]);
     if(txRes.error){alert("Backend error: "+txRes.error.message);return}
     if(goalRes.error){alert("Goals backend error: "+goalRes.error.message);return}
