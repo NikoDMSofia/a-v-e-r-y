@@ -1098,8 +1098,26 @@
 <style id="websiteReturnFloatingStyle">
 .website-return-floating{position:fixed;left:16px;bottom:16px;z-index:10050;display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;background:rgba(8,32,63,.88);border:1px solid rgba(255,255,255,.22);color:#fff;text-decoration:none;font:700 12px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.02em;box-shadow:0 8px 24px rgba(0,0,0,.24);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:transform .18s ease,background .18s ease,box-shadow .18s ease}.website-return-floating:hover{transform:translateY(-2px);background:rgba(12,48,91,.96);box-shadow:0 10px 28px rgba(0,0,0,.3)}.website-return-floating:focus-visible{outline:2px solid #fff;outline-offset:3px}@media(max-width:520px){.website-return-floating{left:12px;bottom:12px;padding:9px 12px;font-size:11px}}
 </style>
+
+<style id="privateVisitorsStyle">
+.visitors-floating{position:fixed;right:16px;bottom:16px;z-index:10050;display:none;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;background:rgba(8,32,63,.9);border:1px solid rgba(255,255,255,.22);color:#fff;font:700 12px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.02em;box-shadow:0 8px 24px rgba(0,0,0,.24);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);cursor:pointer;transition:transform .18s ease,background .18s ease}.visitors-floating:hover{transform:translateY(-2px);background:rgba(12,48,91,.96)}
+.visitors-overlay{position:fixed;inset:0;z-index:12000;background:rgba(2,10,22,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:20px}.visitors-overlay.show{display:flex}.visitors-panel{width:min(680px,100%);max-height:min(78vh,760px);display:flex;flex-direction:column;border-radius:24px;background:linear-gradient(145deg,rgba(11,35,68,.99),rgba(6,22,44,.99));border:1px solid rgba(255,255,255,.13);box-shadow:0 24px 70px rgba(0,0,0,.42);overflow:hidden}.visitors-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 22px;border-bottom:1px solid rgba(255,255,255,.09)}.visitors-head h3{margin:2px 0 0;color:#fff}.visitors-head small{color:rgba(255,255,255,.58)}.visitors-close{width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.07);color:#fff;font-size:20px;cursor:pointer}.visitors-list{overflow:auto;padding:10px 14px 16px}.visitor-row{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;padding:13px 10px;border-bottom:1px solid rgba(255,255,255,.07)}.visitor-row:last-child{border-bottom:0}.visitor-icon{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:rgba(255,255,255,.08)}.visitor-name{font-weight:800;color:#fff}.visitor-page{margin-top:3px;font-size:12px;color:rgba(255,255,255,.62)}.visitor-time{text-align:right;font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap}.visitor-empty{padding:28px;text-align:center;color:rgba(255,255,255,.6)}.visitor-avery .visitor-name{color:#82d8ff}.visitor-guest .visitor-name{color:#e7d28a}@media(max-width:520px){.visitors-floating{right:12px;bottom:12px;padding:9px 12px;font-size:11px}.visitor-row{grid-template-columns:auto 1fr}.visitor-time{grid-column:2;text-align:left}}
+</style>
+
 </head>
 <body>
+
+<button id="visitorsFloatingBtn" class="visitors-floating" type="button" aria-label="Open private visitor history">👁 Visitors</button>
+<div id="visitorsOverlay" class="visitors-overlay" aria-hidden="true">
+  <section class="visitors-panel" role="dialog" aria-modal="true" aria-labelledby="visitorsTitle">
+    <div class="visitors-head">
+      <div><small>Private · visible only to Niki</small><h3 id="visitorsTitle">Website Visitors</h3></div>
+      <button id="visitorsClose" class="visitors-close" type="button" aria-label="Close">×</button>
+    </div>
+    <div id="visitorsList" class="visitors-list"><div class="visitor-empty">No visits recorded yet.</div></div>
+  </section>
+</div>
+
 <a class="website-return-floating" href="index.html" aria-label="Return to website home">← Back to Website</a>
 
   <header>
@@ -1343,6 +1361,46 @@
 
   let txType="deposit", rows=[], goals=[], pinTimer=null, channel=null, goalsChannel=null, unlocked=false, currentUserId=null, guestMode=false;
   const NIKI_UID="47f3c30f-c570-4355-bbdc-971c47a5441e";
+
+  const visitorsBtn=$("visitorsFloatingBtn"), visitorsOverlay=$("visitorsOverlay"), visitorsList=$("visitorsList");
+  let visitsChannel=null;
+  function fmtVisitDate(ts){
+    const d=new Date(ts); if(Number.isNaN(d.getTime())) return "";
+    return new Intl.DateTimeFormat("en-GB",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit",hour12:false}).format(d);
+  }
+  function pageLabel(path,title){
+    const names={"index.html":"Home","letter.html":"The Letter","memories.html":"Memories","love-letter.html":"The Love Letter","for-us.html":"For Us","private.html":"Private"};
+    return names[path]||title||path||"Website";
+  }
+  async function loadVisitors(){
+    if(currentUserId!==NIKI_UID) return;
+    const {data,error}=await sb.from("site_visits").select("id,visitor_type,page_path,page_title,visited_at").order("visited_at",{ascending:false}).limit(100);
+    if(error){visitorsList.innerHTML='<div class="visitor-empty">Could not load visitor history.</div>';return}
+    visitorsList.innerHTML="";
+    if(!data?.length){visitorsList.innerHTML='<div class="visitor-empty">No visits recorded yet.</div>';return}
+    data.forEach(v=>{
+      const row=document.createElement("div");
+      row.className="visitor-row "+(v.visitor_type==="Avery"?"visitor-avery":"visitor-guest");
+      row.innerHTML='<div class="visitor-icon"></div><div><div class="visitor-name"></div><div class="visitor-page"></div></div><div class="visitor-time"></div>';
+      row.querySelector(".visitor-icon").textContent=v.visitor_type==="Avery"?"💙":"👤";
+      row.querySelector(".visitor-name").textContent=v.visitor_type;
+      row.querySelector(".visitor-page").textContent=pageLabel(v.page_path,v.page_title);
+      row.querySelector(".visitor-time").textContent=fmtVisitDate(v.visited_at);
+      visitorsList.appendChild(row);
+    });
+  }
+  function syncVisitorsAccess(){
+    const owner=currentUserId===NIKI_UID && !guestMode;
+    if(visitorsBtn) visitorsBtn.style.display=owner?"inline-flex":"none";
+    if(!owner && visitorsOverlay){visitorsOverlay.classList.remove("show");visitorsOverlay.setAttribute("aria-hidden","true")}
+    if(owner && !visitsChannel){
+      visitsChannel=sb.channel("private-site-visits-live").on("postgres_changes",{event:"INSERT",schema:"public",table:"site_visits"},()=>loadVisitors()).subscribe();
+    }
+  }
+  if(visitorsBtn) visitorsBtn.onclick=async()=>{if(currentUserId!==NIKI_UID)return;await loadVisitors();visitorsOverlay.classList.add("show");visitorsOverlay.setAttribute("aria-hidden","false")};
+  if($("visitorsClose")) $("visitorsClose").onclick=()=>{visitorsOverlay.classList.remove("show");visitorsOverlay.setAttribute("aria-hidden","true")};
+  if(visitorsOverlay) visitorsOverlay.onclick=e=>{if(e.target===visitorsOverlay){visitorsOverlay.classList.remove("show");visitorsOverlay.setAttribute("aria-hidden","true")}};
+
   function applyAccountBadge(){
     const old=document.getElementById("averyAccountBadge");
     if(old) old.remove();
@@ -1385,6 +1443,7 @@
   function balance(){return transactionBalance()-goalsAllocated()}
 
   function enterGuestMode(){
+    if(visitorsBtn) visitorsBtn.style.display="none";
     guestMode=true;
     currentUserId=null;
     unlocked=false;
@@ -1618,7 +1677,7 @@
   document.addEventListener("keydown",e=>{if(e.key==="Escape"){if(!delOverlay.hidden)closeDelete();$("motivationOverlay").hidden=true;$("withdrawNoticeOverlay").hidden=true;if(modal.classList.contains("show")){modal.classList.remove("show");modal.setAttribute("aria-hidden","true")}}});
 
   const {data:{session}}=await sb.auth.getSession();
-  if(session){currentUserId=session.user?.id||null;syncOwnerChipOrder();applyProfileIdentity();auth.style.display="none";lockView.style.display="flex";accountView.style.display="none"}
+  if(session){currentUserId=session.user?.id||null;syncOwnerChipOrder();applyProfileIdentity();syncVisitorsAccess();auth.style.display="none";lockView.style.display="flex";accountView.style.display="none"}
   else{auth.style.display="block";lockView.style.display="none";accountView.style.display="none"}
 
   $("guestViewBtn").addEventListener("click",enterGuestMode);
@@ -1627,7 +1686,7 @@
     e.preventDefault();const err=$("backendAuthError");err.textContent="Signing in…";
     const {data,error}=await sb.auth.signInWithPassword({email:$("backendEmail").value.trim(),password:$("backendPassword").value});
     if(error){err.textContent=error.message;return}
-    currentUserId=data.user?.id||null;applyProfileIdentity();
+    currentUserId=data.user?.id||null;applyProfileIdentity();syncVisitorsAccess();
     $("backendPassword").value="";auth.style.display="none";lockView.style.display="flex";accountView.style.display="none";pinInput.focus();
   });
 
