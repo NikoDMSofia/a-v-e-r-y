@@ -1055,7 +1055,7 @@
     .delete-transaction-cancel{background:rgba(255,255,255,.10);color:#fff;}
     .delete-transaction-confirm{background:#b6283f;color:#fff;}
 
-</style>
+.visitors-clear-wrap{padding:12px 22px 18px;border-top:1px solid rgba(255,255,255,.09);display:flex;justify-content:flex-end}.visitors-clear-btn{border:1px solid rgba(255,100,100,.35);background:rgba(150,30,30,.18);color:#ffb6b6;border-radius:12px;padding:10px 14px;font-weight:700;cursor:pointer}.visitors-clear-btn:disabled{opacity:.5;cursor:default}</style>
 
 
 <style id="averyAccountBadgeStyle">
@@ -1115,6 +1115,7 @@
       <button id="visitorsClose" class="visitors-close" type="button" aria-label="Close">×</button>
     </div>
     <div id="visitorsList" class="visitors-list"><div class="visitor-empty">No visits recorded yet.</div></div>
+    <div class="visitors-clear-wrap"><button id="visitorsClearBtn" class="visitors-clear-btn" type="button">Delete History</button></div>
   </section>
 </div>
 
@@ -1398,7 +1399,7 @@
     }
   }
   if(visitorsBtn) visitorsBtn.onclick=async()=>{if(currentUserId!==NIKI_UID)return;await loadVisitors();visitorsOverlay.classList.add("show");visitorsOverlay.setAttribute("aria-hidden","false")};
-  if($("visitorsClose")) $("visitorsClose").onclick=()=>{visitorsOverlay.classList.remove("show");visitorsOverlay.setAttribute("aria-hidden","true")};
+  if($("visitorsClose")) $("visitorsClose").onclick=()=>{visitorsOverlay.classList.remove("show");visitorsOverlay.setAttribute("aria-hidden","true")};if($("visitorsClearBtn")) $("visitorsClearBtn").onclick=async()=>{if(currentUserId!==NIKI_UID||guestMode)return;if(!confirm("Delete all visitor history? This cannot be undone."))return;const b=$("visitorsClearBtn");b.disabled=true;const {error}=await sb.from("site_visits").delete().not("id","is",null);b.disabled=false;if(error){alert("Could not delete visitor history.");return}await loadVisitors();};
   if(visitorsOverlay) visitorsOverlay.onclick=e=>{if(e.target===visitorsOverlay){visitorsOverlay.classList.remove("show");visitorsOverlay.setAttribute("aria-hidden","true")}};
 
   function applyAccountBadge(){
